@@ -1,7 +1,6 @@
 import scraperwiki
 from bs4 import BeautifulSoup
 
-import string
 import urlparse
 
 url = "http://www.nyc.gov/html/cau/html/cb/cb.shtml"
@@ -63,4 +62,3 @@ for boro in boro_urls:
         print cb_info
         print precincts
         print precinct_phones
-
