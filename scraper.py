@@ -27,7 +27,7 @@ insert_params = ('name', 'neighborhoods', 'address', 'email', 'phone', 'chair',
 info_value_pattern = re.compile(r'\s*[:-]?\s*(.+)')
 
 # Some URLs have this prefix, we'll need to remove it
-exit_url_prefix = 'http://www.nyc.gov/cgi-bin/exit.pl?'
+exit_url_prefix = 'http://www.nyc.gov/cgi-bin/exit.pl?url='
 
 
 def create_or_wipe_table(cursor):
