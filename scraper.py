@@ -32,10 +32,14 @@ def create_or_wipe_table(cursor):
         cursor.execute('DELETE FROM community_boards')
 
 
-def parse_info_line(info, label):
+def parse_info_line(info, labels):
+    if isinstance(labels, str):
+        labels = (labels,)
+    def line_matches(line):
+        return len(filter(lambda label: label.lower() in line.lower(), labels)) >= 1
     try:
         # Find the line
-        line = filter(lambda s: label.lower() in s.lower(), info)[0]
+        line = filter(line_matches, info)[0]
 
         # Strip tags
         line = BeautifulSoup(line).get_text()
@@ -79,7 +83,7 @@ def scrape_board(table):
             'email': parse_info_line(cb_info, 'email'),
             'chair': parse_info_line(cb_info, 'chair'),
             'district_manager': parse_info_line(cb_info, 'district manager'),
-            'board_meeting': parse_info_line(cb_info, 'board meeting'),
+            'board_meeting': parse_info_line(cb_info, ('board meeting', 'board metting')),
             'cabinet_meeting': parse_info_line(cb_info, 'cabinet meeting'),
         })
         return board
