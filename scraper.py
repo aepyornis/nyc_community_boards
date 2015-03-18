@@ -64,7 +64,10 @@ def parse_info_line(info, labels):
     value = line[index:]
 
     # Try to remove separators and other junk
-    value = info_value_pattern.match(value).group(1)
+    try:
+        value = info_value_pattern.match(value).group(1)
+    except AttributeError:
+        pass
     value = ''.join([c for c in value if c in string.printable])
     return value
 
