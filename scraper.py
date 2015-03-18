@@ -12,9 +12,9 @@ import urlparse
 
 url = "http://www.nyc.gov/html/cau/html/cb/cb.shtml"
 insert_sql = """
-    INSERT INTO community_boards (name, neighborhoods, address, email,
+    INSERT INTO community_boards (borough, name, neighborhoods, address, email,
           phone, chair, district_manager, board_meeting, cabinet_meeting) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 insert_params = ('name', 'neighborhoods', 'address', 'email', 'phone', 'chair',
                  'district_manager', 'board_meeting', 'cabinet_meeting')
@@ -24,8 +24,8 @@ def create_or_wipe_table(cursor):
     try:
         cursor.execute("""
             CREATE TABLE community_boards
-                (name text, neighborhoods text, address text, email text,
-                 phone text, chair text, district_manager text,
+                (borough text, name text, neighborhoods text, address text,
+                 email text, phone text, chair text, district_manager text,
                  board_meeting text, cabinet_meeting text)
         """)
     except sqlite3.OperationalError:
@@ -102,6 +102,10 @@ for boro in get_borough_urls():
     html = scraperwiki.scrape(boro)
     soup = BeautifulSoup(html)
 
+    borough = soup.find_all("span", {"class": "area_header"})[0].get_text()
+    borough = borough.replace('Community Boards', '').strip()
+    print borough
+
     # We just want one kind of table, the cb_table class
     cb_tables = soup.find_all("table", {"class":"cb_table"})
     print "Parsing %d tables in %s." % (len(cb_tables), boro)
@@ -111,7 +115,8 @@ for boro in get_borough_urls():
 
         if board:
             print 'Inserting CB', board['name']
-            c.execute(insert_sql, [board[key] for key in insert_params])
+            params = [borough,] + [board[key] for key in insert_params]
+            c.execute(insert_sql, params)
 
 conn.commit()
 c.close()
