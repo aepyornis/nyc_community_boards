@@ -26,6 +26,9 @@ insert_params = ('name', 'neighborhoods', 'address', 'email', 'phone', 'chair',
 
 info_value_pattern = re.compile(r'\s*[:-]?\s*(.+)')
 
+# Some URLs have this prefix, we'll need to remove it
+exit_url_prefix = 'http://www.nyc.gov/cgi-bin/exit.pl?'
+
 
 def create_or_wipe_table(cursor):
     try:
@@ -91,6 +94,7 @@ def scrape_board(table):
 
     try:
         website = cb_info.find_all('a')[0]['href']
+        website = website.replace(exit_url_prefix, '')
     except IndexError:
         website = None
 
