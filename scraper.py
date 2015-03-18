@@ -24,7 +24,7 @@ insert_params = ('name', 'neighborhoods', 'address', 'email', 'phone', 'chair',
                  'district_manager', 'board_meeting', 'cabinet_meeting',
                  'website')
 
-info_value_pattern = re.compile(r'[:-]?\s*(.+)')
+info_value_pattern = re.compile(r'\s*[:-]?\s*(.+)')
 
 
 def create_or_wipe_table(cursor):
@@ -109,7 +109,7 @@ def scrape_board(table):
             'address': ' '.join([s.strip() for s in cb_info[1:4]]),
             'phone': parse_info_line(cb_info, 'phone'),
             'email': parse_info_line(cb_info, 'email'),
-            'chair': parse_info_line(cb_info, ('chair person', 'chair', 'chairperson')),
+            'chair': parse_info_line(cb_info, ('chair person', 'chairperson', 'chair')),
             'district_manager': parse_info_line(cb_info, 'district manager'),
             'board_meeting': parse_info_line(cb_info, ('board meeting', 'board metting')),
             'cabinet_meeting': parse_info_line(cb_info, 'cabinet meeting'),
