@@ -42,9 +42,9 @@ create_or_wipe_table(c)
 html = scraperwiki.scrape(url)
 soup = BeautifulSoup(html)
 
-# In this case I know (because I looked at the page source), that we're looking for one 
-# td with the id attribute "main_content" and then we want to find the paragraphs within 
-# that block of HTML.
+# In this case I know (because I looked at the page source), that we're looking
+# for one td with the id attribute "main_content" and then we want to find the 
+# paragraphs within that block of HTML.
 
 # first, find the "main_content" cell
 lump = soup.find("td", id="main_content");
@@ -52,9 +52,9 @@ lump = soup.find("td", id="main_content");
 # then find all the paragraphs within that block of HTML
 paragraphs = lump.find_all("p")
 
-# The second paragraph, or paragraphs[1] in our list syntax has the actual community boards. 
-# We can find the "anchors" in that paragraph and pull out their "href" attributes
-# to see the full list of pages we want to scrape.
+# The second paragraph, or paragraphs[1] in our list syntax has the actual 
+# community boards. We can find the "anchors" in that paragraph and pull out 
+# their "href" attributes to see the full list of pages we want to scrape.
 for anchor in paragraphs[1].find_all("a"):
     print anchor['href']
     print urlparse.urljoin(url,anchor['href'])
@@ -66,15 +66,16 @@ boro_urls = []
 for anchor in paragraphs[1].find_all("a"):
     boro_urls.append(urlparse.urljoin(url,anchor['href']))
 
-# Now comes the fun part. For every boro in our boro_urls list, we're going to do some scraping. 
+# Now comes the fun part. For every boro in our boro_urls list, we're going to
+# do some scraping. 
 for boro in boro_urls:
     html = scraperwiki.scrape(boro)
     soup = BeautifulSoup(html)
-    # we just want one kind of table, the cb_table class
+
+    # We just want one kind of table, the cb_table class
     cb_tables = soup.find_all("table", {"class":"cb_table"})
     print "Parsing %d tables in %s." % (len(cb_tables), boro)
-    # now this all starts to look a whole lot like https://scraperwiki.com/scrapers/foreclosures --
-    # we know how to put the rows from a table into a data store!
+
     for table in cb_tables:
         rows = table.find_all('tr')
         cb_name = rows[0].get_text().strip()
