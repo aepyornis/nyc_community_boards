@@ -13,6 +13,7 @@ conn = sqlite3.connect('data.sqlite')
 c = conn.cursor()
 url = "http://www.nyc.gov/html/cau/html/cb/cb.shtml"
 
+
 def create_or_wipe_table(cursor):
     try:
         cursor.execute("""
@@ -34,6 +35,7 @@ def parse_info_line(info, label):
 
     # Get just the part after the label
     return line.split(': ')[1].strip()
+
 
 create_or_wipe_table(c)
 
