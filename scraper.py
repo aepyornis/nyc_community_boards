@@ -45,7 +45,7 @@ def parse_info_line(info, labels):
         line = BeautifulSoup(line).get_text()
 
         # Get just the part after the label
-        return line.split(': ')[1].strip()
+        return line.split(':')[1].strip()
     except IndexError:
         return None
 
