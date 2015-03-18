@@ -1,9 +1,41 @@
+"""
+This is a fork/port of Phil Ashlock's Community Board scraper from scraperwiki:
+    https://classic.scraperwiki.com/scrapers/city_representatives_-_nyc_community_boards/
+
+"""
 import scraperwiki
 from bs4 import BeautifulSoup
 
+import sqlite3
 import urlparse
 
+conn = sqlite3.connect('data.sqlite')
+c = conn.cursor()
 url = "http://www.nyc.gov/html/cau/html/cb/cb.shtml"
+
+def create_or_wipe_table(cursor):
+    try:
+        cursor.execute("""
+            CREATE TABLE community_boards
+                (name text, neighborhoods text, address text, email text,
+                 phone text, chair text, district_manager text,
+                 board_meeting text, cabinet_meeting text)
+        """)
+    except sqlite3.OperationalError:
+        cursor.execute('DELETE FROM community_boards')
+
+
+def parse_info_line(info, label):
+    # Find the line
+    line = filter(lambda s: label.lower() in s.lower(), cb_info)[0]
+
+    # Strip tags
+    line = BeautifulSoup(line).get_text()
+
+    # Get just the part after the label
+    return line.split(': ')[1]
+
+create_or_wipe_table(c)
 
 html = scraperwiki.scrape(url)
 soup = BeautifulSoup(html)
@@ -53,12 +85,37 @@ for boro in boro_urls:
     for table in cb_tables:
         rows = table.find_all('tr')
         cb_name = rows[0].get_text()
-        neighborhoods = rows[1].find_all("td")[2].get_text()
-        cb_info = rows[2].find_all("td")[1].get_text()
-        precincts = rows[3].find_all("td")[1].get_text()
-        precinct_phones = rows[4].find_all("td")[1].get_text()
-        print cb_name
-        print neighborhoods
-        print cb_info
-        print precincts
-        print precinct_phones
+
+        inner_table = rows[1].find_all('table')[0]
+        inner_rows = inner_table.find_all('tr')
+        neighborhoods = inner_rows[0].find_all("td")[1].get_text()
+        cb_info = inner_rows[1].find_all("td")[1]
+        precincts = inner_rows[2].find_all("td")[1].get_text()
+        precinct_phones = inner_rows[3].find_all("td")[1].get_text()
+
+        email = None
+        try:
+            cb_info = str(cb_info).split('<br/>')
+
+            address = ' '.join([s.strip() for s in cb_info[1:4]])
+            phone = parse_info_line(cb_info, 'phone')
+            email = parse_info_line(cb_info, 'email')
+            chair = parse_info_line(cb_info, 'chair')
+            district_manager = parse_info_line(cb_info, 'district manager')
+            board_meeting = parse_info_line(cb_info, 'board meeting')
+            cabinet_meeting = parse_info_line(cb_info, 'cabinet meeting')
+        except IndexError, TypeError:
+            pass
+
+        print 'Inserting CB', cb_name
+        c.execute("""
+            INSERT INTO community_boards (name, neighborhoods, address, email,
+                  phone, chair, district_manager, board_meeting, cabinet_meeting) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (cb_name, neighborhoods, address, email, phone, chair,
+            district_manager, board_meeting, cabinet_meeting)
+        )
+
+conn.commit()
+c.close()
