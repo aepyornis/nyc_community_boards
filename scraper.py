@@ -33,7 +33,7 @@ def parse_info_line(info, label):
     line = BeautifulSoup(line).get_text()
 
     # Get just the part after the label
-    return line.split(': ')[1]
+    return line.split(': ')[1].strip()
 
 create_or_wipe_table(c)
 
@@ -84,14 +84,14 @@ for boro in boro_urls:
     ## we know how to put the rows from a table into a data store!
     for table in cb_tables:
         rows = table.find_all('tr')
-        cb_name = rows[0].get_text()
+        cb_name = rows[0].get_text().strip()
 
         inner_table = rows[1].find_all('table')[0]
         inner_rows = inner_table.find_all('tr')
-        neighborhoods = inner_rows[0].find_all("td")[1].get_text()
+        neighborhoods = inner_rows[0].find_all("td")[1].get_text().strip()
         cb_info = inner_rows[1].find_all("td")[1]
-        precincts = inner_rows[2].find_all("td")[1].get_text()
-        precinct_phones = inner_rows[3].find_all("td")[1].get_text()
+        precincts = inner_rows[2].find_all("td")[1].get_text().strip()
+        precinct_phones = inner_rows[3].find_all("td")[1].get_text().strip()
 
         email = None
         try:
