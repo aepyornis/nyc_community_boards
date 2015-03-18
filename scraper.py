@@ -75,11 +75,9 @@ for anchor in paragraphs[1].find_all("a"):
 for boro in boro_urls:
     html = scraperwiki.scrape(boro)
     soup = BeautifulSoup(html)
-    print soup.title.get_text()
-    print boro
     ## we just want one kind of table, the cb_table class
     cb_tables = soup.find_all("table", {"class":"cb_table"})
-    print "There are", len(cb_tables), "in this borough."
+    print "Parsing %d tables in %s." % (len(cb_tables), boro)
     ## now this all starts to look a whole lot like https://scraperwiki.com/scrapers/foreclosures --
     ## we know how to put the rows from a table into a data store!
     for table in cb_tables:
