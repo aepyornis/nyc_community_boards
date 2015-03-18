@@ -109,7 +109,7 @@ def scrape_board(table):
             'address': ' '.join([s.strip() for s in cb_info[1:4]]),
             'phone': parse_info_line(cb_info, 'phone'),
             'email': parse_info_line(cb_info, 'email'),
-            'chair': parse_info_line(cb_info, ('chair', 'chairperson')),
+            'chair': parse_info_line(cb_info, ('chair person', 'chair', 'chairperson')),
             'district_manager': parse_info_line(cb_info, 'district manager'),
             'board_meeting': parse_info_line(cb_info, ('board meeting', 'board metting')),
             'cabinet_meeting': parse_info_line(cb_info, 'cabinet meeting'),
