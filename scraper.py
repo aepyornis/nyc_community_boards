@@ -50,13 +50,6 @@ lump = soup.find("td", id="main_content");
 # then find all the paragraphs within that block of HTML
 paragraphs = lump.find_all("p")
 
-# how many paragraphs did it find? 
-print "This page has", len(paragraphs), "paragraphs."
-
-# what is in those paragraphs?
-for para in paragraphs:
-    print para.get_text()
-
 # The second paragraph, or paragraphs[1] in our list syntax has the actual community boards. 
 # We can find the "anchors" in that paragraph and pull out their "href" attributes
 # to see the full list of pages we want to scrape.
