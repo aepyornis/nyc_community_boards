@@ -46,11 +46,8 @@ soup = BeautifulSoup(html)
 # for one td with the id attribute "main_content" and then we want to find the 
 # paragraphs within that block of HTML.
 
-# first, find the "main_content" cell
-lump = soup.find("td", id="main_content");
-
-# then find all the paragraphs within that block of HTML
-paragraphs = lump.find_all("p")
+# Then find all the paragraphs within that block of HTML
+paragraphs = soup.find("td", id="main_content").find_all("p")
 
 # The second paragraph, or paragraphs[1] in our list syntax has the actual 
 # community boards. We can find the "anchors" in that paragraph and pull out 
