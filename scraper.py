@@ -49,7 +49,7 @@ def parse_info_line(info, labels):
     # Get just the part after the label
     splitters = (':', '-')
     for splitter in splitters:
-        split_line = line.split(splitter)
+        split_line = line.split(splitter, 1)
         if len(split_line) > 1:
             return split_line[1].strip()
     return None
