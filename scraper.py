@@ -16,11 +16,13 @@ import urlparse
 url = "http://www.nyc.gov/html/cau/html/cb/cb.shtml"
 insert_sql = """
     INSERT INTO community_boards (borough, name, neighborhoods, address, email,
-          phone, chair, district_manager, board_meeting, cabinet_meeting) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          phone, chair, district_manager, board_meeting, cabinet_meeting,
+          website) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 insert_params = ('name', 'neighborhoods', 'address', 'email', 'phone', 'chair',
-                 'district_manager', 'board_meeting', 'cabinet_meeting')
+                 'district_manager', 'board_meeting', 'cabinet_meeting',
+                 'website')
 
 info_value_pattern = re.compile(r'[:-]?\s*(.+)')
 
@@ -31,7 +33,7 @@ def create_or_wipe_table(cursor):
             CREATE TABLE community_boards
                 (borough text, name text, neighborhoods text, address text,
                  email text, phone text, chair text, district_manager text,
-                 board_meeting text, cabinet_meeting text)
+                 board_meeting text, cabinet_meeting text, website text)
         """)
     except sqlite3.OperationalError:
         cursor.execute('DELETE FROM community_boards')
@@ -84,11 +86,17 @@ def scrape_board(table):
     inner_rows = inner_table.find_all('tr')
     cb_info = inner_rows[1].find_all("td")[1]
 
+    try:
+        website = cb_info.find_all('a')[0]['href']
+    except IndexError:
+        website = None
+
     board = {
         'name': rows[0].get_text().strip(),
         'neighborhoods': inner_rows[0].find_all("td")[1].get_text().strip(),
         'precincts': inner_rows[2].find_all("td")[1].get_text().strip(),
         'precinct_phones': inner_rows[3].find_all("td")[1].get_text().strip(),
+        'website': website,
     }
 
     try:
