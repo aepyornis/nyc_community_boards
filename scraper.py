@@ -40,14 +40,19 @@ def parse_info_line(info, labels):
     try:
         # Find the line
         line = filter(line_matches, info)[0]
-
-        # Strip tags
-        line = BeautifulSoup(line).get_text()
-
-        # Get just the part after the label
-        return line.split(':')[1].strip()
     except IndexError:
         return None
+
+    # Strip tags
+    line = BeautifulSoup(line).get_text()
+
+    # Get just the part after the label
+    splitters = (':', '-')
+    for splitter in splitters:
+        split_line = line.split(splitter)
+        if len(split_line) > 1:
+            return split_line[1].strip()
+    return None
 
 
 def get_borough_urls():
@@ -81,7 +86,7 @@ def scrape_board(table):
             'address': ' '.join([s.strip() for s in cb_info[1:4]]),
             'phone': parse_info_line(cb_info, 'phone'),
             'email': parse_info_line(cb_info, 'email'),
-            'chair': parse_info_line(cb_info, 'chair'),
+            'chair': parse_info_line(cb_info, ('chair', 'chairperson')),
             'district_manager': parse_info_line(cb_info, 'district manager'),
             'board_meeting': parse_info_line(cb_info, ('board meeting', 'board metting')),
             'cabinet_meeting': parse_info_line(cb_info, 'cabinet meeting'),
