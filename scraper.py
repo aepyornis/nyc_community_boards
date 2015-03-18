@@ -37,35 +37,22 @@ def parse_info_line(info, label):
     return line.split(': ')[1].strip()
 
 
+def get_borough_urls():
+    html = scraperwiki.scrape(url)
+    soup = BeautifulSoup(html)
+
+    # Find all the paragraphs within the main_content cell
+    paragraphs = soup.find("td", id="main_content").find_all("p")
+
+    # Create a list of borough urls
+    return [urlparse.urljoin(url, l['href']) for l in paragraphs[1].find_all("a")]
+
+
 create_or_wipe_table(c)
 
-html = scraperwiki.scrape(url)
-soup = BeautifulSoup(html)
 
-# In this case I know (because I looked at the page source), that we're looking
-# for one td with the id attribute "main_content" and then we want to find the 
-# paragraphs within that block of HTML.
-
-# Then find all the paragraphs within that block of HTML
-paragraphs = soup.find("td", id="main_content").find_all("p")
-
-# The second paragraph, or paragraphs[1] in our list syntax has the actual 
-# community boards. We can find the "anchors" in that paragraph and pull out 
-# their "href" attributes to see the full list of pages we want to scrape.
-for anchor in paragraphs[1].find_all("a"):
-    print anchor['href']
-    print urlparse.urljoin(url,anchor['href'])
-    
-# Create an empty list (or array).
-boro_urls = []
-
-# Instead of printing the URLs to the screen, append them to our list.
-for anchor in paragraphs[1].find_all("a"):
-    boro_urls.append(urlparse.urljoin(url,anchor['href']))
-
-# Now comes the fun part. For every boro in our boro_urls list, we're going to
-# do some scraping. 
-for boro in boro_urls:
+# For every boro in our list, scrape the info for that community board
+for boro in get_borough_urls():
     html = scraperwiki.scrape(boro)
     soup = BeautifulSoup(html)
 
