@@ -6,9 +6,12 @@ This is a fork/port of Phil Ashlock's Community Board scraper from scraperwiki:
 import scraperwiki
 from bs4 import BeautifulSoup
 
+import re
 import sqlite3
+import string
 import traceback
 import urlparse
+
 
 url = "http://www.nyc.gov/html/cau/html/cb/cb.shtml"
 insert_sql = """
@@ -18,6 +21,8 @@ insert_sql = """
 """
 insert_params = ('name', 'neighborhoods', 'address', 'email', 'phone', 'chair',
                  'district_manager', 'board_meeting', 'cabinet_meeting')
+
+info_value_pattern = re.compile(r'[:-]?\s*(.+)')
 
 
 def create_or_wipe_table(cursor):
@@ -35,24 +40,31 @@ def create_or_wipe_table(cursor):
 def parse_info_line(info, labels):
     if isinstance(labels, str):
         labels = (labels,)
-    def line_matches(line):
-        return len(filter(lambda label: label.lower() in line.lower(), labels)) >= 1
-    try:
-        # Find the line
-        line = filter(line_matches, info)[0]
-    except IndexError:
+
+    matching_label = None
+    line = None
+    for label in labels:
+        try:
+            # Find the line
+            line = filter(lambda l: label.lower() in l.lower(), info)[0]
+            matching_label = label
+            break
+        except IndexError:
+            continue
+    if not line:
         return None
 
     # Strip tags
     line = BeautifulSoup(line).get_text()
 
-    # Get just the part after the label
-    splitters = (':', '-')
-    for splitter in splitters:
-        split_line = line.split(splitter, 1)
-        if len(split_line) > 1:
-            return split_line[1].strip()
-    return None
+    # Just get the text after the matching label
+    index = line.lower().rfind(matching_label.lower()) + len(matching_label)
+    value = line[index:]
+
+    # Try to remove separators and other junk
+    value = info_value_pattern.match(value).group(1)
+    value = ''.join([c for c in value if c in string.printable])
+    return value
 
 
 def get_borough_urls():
