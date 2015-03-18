@@ -71,7 +71,6 @@ for boro in get_borough_urls():
         precincts = inner_rows[2].find_all("td")[1].get_text().strip()
         precinct_phones = inner_rows[3].find_all("td")[1].get_text().strip()
 
-        email = None
         try:
             cb_info = str(cb_info).split('<br/>')
 
