@@ -1,25 +1,33 @@
 """
-This is a fork/port of Phil Ashlock's Community Board scraper from scraperwiki:
-    https://classic.scraperwiki.com/scrapers/city_representatives_-_nyc_community_boards/
+Forked from https://github.com/ebrelsford/nyc_community_boards, which itself is a 
+fork of Phil Ashlock's Community Board scraper from scraperwiki:
+  https://classic.scraperwiki.com/scrapers/city_representatives_-_nyc_community_boards/
+
+Changes:
+  - Use requests instead of scraperwiki
+  - Runs on python3
+  - Saves sqlite database and CSV file
 
 """
-import scraperwiki
-from bs4 import BeautifulSoup
-
+import csv
 import re
 import sqlite3
 import string
 import traceback
-import urlparse
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse, urljoin
 
 
 url = "http://www.nyc.gov/html/cau/html/cb/cb.shtml"
+
 insert_sql = """
     INSERT INTO community_boards (borough, name, neighborhoods, address, email,
           phone, chair, district_manager, board_meeting, cabinet_meeting,
           website) 
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
+
 insert_params = ('name', 'neighborhoods', 'address', 'email', 'phone', 'chair',
                  'district_manager', 'board_meeting', 'cabinet_meeting',
                  'website')
@@ -28,7 +36,6 @@ info_value_pattern = re.compile(r'\s*[:-]?\s*(.+)')
 
 # Some URLs have this prefix, we'll need to remove it
 exit_url_prefix = 'http://www.nyc.gov/cgi-bin/exit.pl?url='
-
 
 def create_or_wipe_table(cursor):
     try:
@@ -51,7 +58,7 @@ def parse_info_line(info, labels):
     for label in labels:
         try:
             # Find the line
-            line = filter(lambda l: label.lower() in l.lower(), info)[0]
+            line = list(filter(lambda l: label.lower() in l.lower(), info))[0]
             matching_label = label
             break
         except IndexError:
@@ -76,14 +83,15 @@ def parse_info_line(info, labels):
 
 
 def get_borough_urls():
-    html = scraperwiki.scrape(url)
-    soup = BeautifulSoup(html)
+    html = requests.get(url).text
+    
+    soup = BeautifulSoup(html, "lxml")
 
     # Find all the paragraphs within the main_content cell
     paragraphs = soup.find("td", id="main_content").find_all("p")
 
     # Create a list of borough urls
-    return [urlparse.urljoin(url, l['href']) for l in paragraphs[1].find_all("a")]
+    return [urljoin(url, l['href']) for l in paragraphs[1].find_all("a")]
 
 
 def scrape_board(table):
@@ -120,35 +128,53 @@ def scrape_board(table):
         })
         return board
     except IndexError:
-        print 'Failed to load %s. Skipping.' % board['name']
+        print('Failed to load %s. Skipping.' % board['name'])
         traceback.print_exc()
         return None
 
 
-conn = sqlite3.connect('data.sqlite')
+def save_database_as_csv(connection):
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM community_boards")
+    
+    with open("./community_boads.csv", "w") as write_file:
+         csv_out = csv.writer(write_file)
+         # write header                        
+         csv_out.writerow([d[0] for d in cursor.description])
+         # write data                          
+         for row in cursor:
+             csv_out.writerow(row)
+    
+    cursor.close()
+
+    
+conn = sqlite3.connect('./community_boards.db')
 c = conn.cursor()
 create_or_wipe_table(c)
 
-# For every boro in our list, scrape the info for that community board
-for boro in get_borough_urls():
-    html = scraperwiki.scrape(boro)
-    soup = BeautifulSoup(html)
+# # For every boro in our list, scrape the info for that community board
+for boro_url in get_borough_urls():
+    html = requests.get(boro_url).text
+
+    soup = BeautifulSoup(html, "lxml")
 
     borough = soup.find_all("span", {"class": "area_header"})[0].get_text()
     borough = borough.replace('Community Boards', '').strip()
-    print borough
+    print(borough)
 
     # We just want one kind of table, the cb_table class
     cb_tables = soup.find_all("table", {"class":"cb_table"})
-    print "Parsing %d tables in %s." % (len(cb_tables), boro)
+    print("Parsing %d tables in %s." % (len(cb_tables), boro_url))
 
     for table in cb_tables:
         board = scrape_board(table)
 
         if board:
-            print 'Inserting CB', board['name']
+            print('Inserting CB', board['name'])
             params = [borough,] + [board[key] for key in insert_params]
             c.execute(insert_sql, params)
 
 conn.commit()
 c.close()
+save_database_as_csv(conn)
+
