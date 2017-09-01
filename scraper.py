@@ -133,17 +133,32 @@ def scrape_board(table):
         return None
 
 
+def boro_to_n(boro):
+    return {
+        'manhattan': '1',
+        'bronx': '2',
+        'brooklyn': '3',
+        'queens': '4',
+        'staten island': '5'
+    }[boro.lower()]
+    
+
+def compute_cd(boro, name):
+    return boro_to_n(boro) + re.search('([0-9]{1,2})', name).group(1).zfill(2)
+    
+
 def save_database_as_csv(connection):
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM community_boards")
     
     with open("./community_boads.csv", "w") as write_file:
          csv_out = csv.writer(write_file)
-         # write header                        
-         csv_out.writerow([d[0] for d in cursor.description])
+         # write header
+         header = [d[0] for d in cursor.description] + ['cd']
+         csv_out.writerow(header)
          # write data                          
          for row in cursor:
-             csv_out.writerow(row)
+             csv_out.writerow(row + tuple([compute_cd(row[0], row[1])]))
     
     cursor.close()
 
